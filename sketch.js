@@ -4,8 +4,15 @@ let click1 = -1;
 let radius = 25;
 let infos = [];
 
+let xx = 0;
+
 let initialPopulation = 4;
 let genesNumber = 4;
+let mutationsNumber = {
+  max: 3,
+  min: 1,
+  number: 0
+};
 let generationPopulation = {
   max: 6,
   min: 3
@@ -15,6 +22,7 @@ let numberGenerations = {
   min: 3
 }
 let menusActivated = false;
+
 
 function setup() {
   createCanvas(600, 600);
@@ -29,6 +37,8 @@ function setup() {
   
   //mutacions
   generateMutations();
+  
+  textFont('monospace');
 }
 
 function draw() {
@@ -37,10 +47,10 @@ function draw() {
     backGround();
     topGround();
     for(var i = 0; i < pesols.length; i++){
-      pesols[i].show(i);
+      pesols[i].show();
     }
     for(var i = 0; i < infos.length; i++){
-      infos[i].show(i);
+      infos[i].show();
     }
   }else{
     infoMenu();
@@ -57,13 +67,18 @@ class Pesol{
     this.y = y;
     this.stroke = false;
     this.shape = 1;
+    this.c = 0;
+    this.found = false;
+  }
+  
+  show(){
     for(var i = 0; i < this.genoma.genes.length; i++){
-      if(this.genoma.genes[i].a == 1 || this.genoma.genes[i].b == 1){
+      if(this.genoma.genes[i].a == true || this.genoma.genes[i].b == true){
         if(i == 0){this.c = color(46, 204, 113);}
         if(i == 1){this.c.setAlpha(255);}
         if(i == 4){}
       }
-      if(this.genoma.genes[i].a == 0 && this.genoma.genes[i].b == 0){
+      if(this.genoma.genes[i].a == false && this.genoma.genes[i].b == false){
         if(i == 0){this.c = color(241, 196, 15);}
         if(i == 1){this.c.setAlpha(100);}
         if(i == 2){this.shape = 2;}
@@ -71,20 +86,26 @@ class Pesol{
         if(i == 4){}
       }
     }
-  }
-  
-  show(i){
     push();
     if(this.parents != null){
       line(pesols[this.parents.a].x, pesols[this.parents.a].y, this.x, this.y);
       line(pesols[this.parents.b].x, pesols[this.parents.b].y, this.x, this.y);
     }
     if(this.stroke == false){noStroke();}
+    if(this.found == true){
+      push();
+      strokeWeight(3);
+      stroke(255, 0, 0, 150);
+      noFill();
+      circle(this.x, this.y, radius + 10);
+      pop();
+    }
     if(this.mutated == true){
       push();
-      noStroke();
-      fill(255, 0, 0, 150);
-      circle(this.x, this.y, radius + 5);
+      strokeWeight(2);
+      stroke(0, 150, 0);
+      noFill();
+      circle(this.x, this.y, radius + 6);
       pop();
     }
     fill(this.c);
@@ -103,8 +124,8 @@ class Genoma{
     if(parent1 == null){
       for(var i = 0; i < genesNumber; i++){
         let g = {
-          a: round(random(0,1)),
-          b: round(random(0,1)),
+          a: boolean(round(random(0,1))),
+          b: boolean(round(random(0,1))),
         }
         this.genes.push(g);
       }
@@ -223,25 +244,63 @@ function generatePopulation(){
 }
 
 function generateMutations(){
+  mutationsNumber.number = round(random(mutationsNumber.min, mutationsNumber.max));
+  for(var i = 0; i < mutationsNumber.number; i++){
+    let rand = round(random(initialPopulation -1, pesols.length -1));
+    let found = false;
+    for(var k = 0; k < genesNumber; k++){
+      if(pesols[rand].parents != null){
+        if(pesols[pesols[rand].parents.a].genoma.genes[k].a == pesols[pesols[rand].parents.a].genoma.genes[k].b && pesols[pesols[rand].parents.b].genoma.genes[k].a == pesols[pesols[rand].parents.b].genoma.genes[k].b){
+          if(round(random(0, 1)) == 1){
+            pesols[rand].genoma.genes[k].a = !pesols[rand].genoma.genes[k].a;
+          }else{
+            pesols[rand].genoma.genes[k].b = !pesols[rand].genoma.genes[k].b;
+          }
+          found = true;
+          pesols[rand].mutated = true;
+          break;
+        }
+      }
+    }
+    if(found == false){i--}
+  }
 }
 
 function topGround(){
+  push();
   for(var i = 0; i < 6; i++){
-    push();
     noStroke();
     fill(color(118, 215, 196));
     rect(width - 255 + 30*i, height - 55, 110, 210, 10);
     fill(color(209, 242, 235));
     rect(width - 250 + 30*i, height - 50, 100, 200, 10);
-    fill(0);
-    textAlign(CENTER);
-    textSize(24);
-    text("INFO", width - 200 + 30*i, height - 20);
-    pop();
   }
+  fill(118, 215, 196);
+  circle(560, 510, 60);
+  fill(0);
+  textAlign(CENTER, CENTER);
+  textSize(24);
+  text("INFO", width - 200 + 30*5, height - 20);
+  text("✓", 560, 510);
+  pop();
 }
 
 function backGround(){
+  push();
+  xx+= deltaTime/1000;
+  noStroke();
+  for(var x = 0; x < 250; x+= 6){ 
+    let y = 40*sin(xx +x) + x + 400;
+    let yy = -40*sin(xx +x) + x + 400;
+    fill(color(115, 198, 182));
+    circle(x, y, 10);
+    fill(color(17, 122, 101));
+    circle(x, yy, 10);
+  }
+  fill(0);
+  textSize(14);
+  text("Joan Font Perelló 2020", 10, height - 10);
+  pop();
 }
 
 function infoMenu(){
@@ -313,10 +372,10 @@ function infoMenu(){
 
 function mouseClicked(){
   if(menusActivated == true){
-      menusActivated = false;
+    menusActivated = false;
   }
   if(menusActivated == false && height - mouseY <= 55 && width - mouseX <= 255){
-      menusActivated = true;
+    menusActivated = true;
   }
   if(infos.length != 0){
       infos.length = 0;
@@ -327,26 +386,48 @@ function mouseClicked(){
       infos.push(k);
     }
   }
+  if(dist(mouseX, mouseY, 560, 510) < 30){
+    check();
+  }
 }
 
-/*function doubleClicked(){
+function doubleClicked(){
   for(var i = 0; i < pesols.length; i++){
-    if(dist(mouseX, mouseY, pesols[i].x, pesols[i].y) <= radius/2 && click1 != -1){
-      let x = (pesols[i].x + pesols[click1].x)/2;
-      let y = max(pesols[i].y, pesols[click1].y) + radius+20;
-      let parents = {
-        a: click1,
-        b: i
-      }
-      let g = new Genoma(pesols[i].genoma, pesols[click1].genoma);
-      let p = new Pesol(g, x, y, parents);
-      pesols.push(p);
-      click1 = -1;
-    }else if(dist(mouseX, mouseY, pesols[i].x, pesols[i].y) <= radius/2 && click1 == -1){
-      click1 = i;
+    if(dist(mouseX, mouseY, pesols[i].x, pesols[i].y) <= radius/2){
+      pesols[i].found = !pesols[i].found;
     }
   }
   return false;
-}*/
+}
+
+function check(){
+  noLoop();
+  let correct = true;
+  for(var i = 0; i < pesols.length; i++){
+    if(pesols[i].found != pesols[i].mutated){
+      correct = false;
+      lost();
+    }
+  }
+  if(correct == true){won();}
+}
+
+function lost(){
+  push();
+  textSize(400);
+  textAlign(CENTER, CENTER);
+  fill(color(255, 0, 0));
+  text("X", width/2, height/2);
+  pop();
+}
+
+function won(){
+  push();
+  textSize(400);
+  textAlign(CENTER, CENTER);
+  fill(color(0, 255, 0));
+  text("✓", width/2, height/2);
+  pop();
+}
 
 
