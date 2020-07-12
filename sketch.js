@@ -1,8 +1,15 @@
+let id;
+
 let pesols = [];
 let buttons = [];
 let click1 = -1;
 let radius = 25;
 let infos = [];
+
+let puntuation;
+
+let difficulty = 3;
+let help = 2;
 
 let xx = 0;
 
@@ -21,29 +28,30 @@ let numberGenerations = {
   max: 5,
   min: 3
 }
-let menusActivated = false;
+let menusActivated = {
+  any: false,
+  info: false,
+  end: false,
+  start: true,
+  help: false,
+  error: false
+  
+};
 
 
 function setup() {
   createCanvas(600, 600);
-  //població inicial
-  for(var i = 0; i < initialPopulation; i++){
-    let g = new Genoma();
-    let p = new Pesol(g, (i+1)*(width -50)/(initialPopulation+1), radius, null, 0);
-    pesols.push(p);
-  }
-  //fills generats
-  generatePopulation();
-  
-  //mutacions
-  generateMutations();
-  
   textFont('monospace');
 }
 
 function draw() {
   background(color(232, 248, 245));
-  if(menusActivated == false){
+  if(menusActivated.info == true || menusActivated.start == true || menusActivated.end == true || menusActivated.error == true || menusActivated.help == true){
+    menusActivated.any = true;
+  }else{
+    menusActivated.any = false;
+  }
+  if(menusActivated.any == false){
     backGround();
     topGround();
     for(var i = 0; i < pesols.length; i++){
@@ -53,7 +61,21 @@ function draw() {
       infos[i].show();
     }
   }else{
-    infoMenu();
+    if(menusActivated.info == true){
+      infoMenu();
+    }
+    if(menusActivated.end == true){
+      endMenu();
+    }
+    if(menusActivated.start == true){
+      startMenu();
+    }
+    if(menusActivated.help == true){
+      helpMenu();
+    }
+    if(menusActivated.error == true){
+      errorMenu();
+    }
   }
 }
 
@@ -245,24 +267,27 @@ function generatePopulation(){
 
 function generateMutations(){
   mutationsNumber.number = round(random(mutationsNumber.min, mutationsNumber.max));
+  let nothing = 0;
   for(var i = 0; i < mutationsNumber.number; i++){
     let rand = round(random(initialPopulation -1, pesols.length -1));
     let found = false;
     for(var k = 0; k < genesNumber; k++){
       if(pesols[rand].parents != null){
-        if(pesols[pesols[rand].parents.a].genoma.genes[k].a == pesols[pesols[rand].parents.a].genoma.genes[k].b && pesols[pesols[rand].parents.b].genoma.genes[k].a == pesols[pesols[rand].parents.b].genoma.genes[k].b){
+        if(pesols[pesols[rand].parents.a].genoma.genes[k].a == pesols[pesols[rand].parents.a].genoma.genes[k].b && pesols[pesols[rand].parents.b].genoma.genes[k].a == pesols[pesols[rand].parents.b].genoma.genes[k].b && pesols[rand].mutated == false){
           if(round(random(0, 1)) == 1){
             pesols[rand].genoma.genes[k].a = !pesols[rand].genoma.genes[k].a;
           }else{
             pesols[rand].genoma.genes[k].b = !pesols[rand].genoma.genes[k].b;
           }
           found = true;
+          nothing = 0;
           pesols[rand].mutated = true;
           break;
         }
       }
     }
-    if(found == false){i--}
+    if(found == false){i--; nothing++}
+    if(nothing == 60){generator();}
   }
 }
 
@@ -277,11 +302,15 @@ function topGround(){
   }
   fill(118, 215, 196);
   circle(560, 510, 60);
+  circle(560, 430, 60);
+  circle(560, 350, 60);
   fill(0);
   textAlign(CENTER, CENTER);
   textSize(24);
   text("INFO", width - 200 + 30*5, height - 20);
   text("✓", 560, 510);
+  text("⟳", 560, 350);
+  text("?", 560, 430);
   pop();
 }
 
@@ -290,8 +319,8 @@ function backGround(){
   xx+= deltaTime/1000;
   noStroke();
   for(var x = 0; x < 250; x+= 6){ 
-    let y = 40*sin(xx +x) + x + 400;
-    let yy = -40*sin(xx +x) + x + 400;
+    let y = 45*sin(xx +x) + x + 400;
+    let yy = -45*sin(xx +x) + x + 400;
     fill(color(115, 198, 182));
     circle(x, y, 10);
     fill(color(17, 122, 101));
@@ -359,35 +388,58 @@ function infoMenu(){
   pop();
   pop();
 }
-/*function mouseDragged(){
-  for(var i = 0; i < pesols.length; i++){
-    if(dist(mouseX, mouseY, pesols[i].x, pesols[i].y) <= radius/2 + 5){
-      pesols[i].x = mouseX;
-      pesols[i].y = mouseY;
-      break;
-    }
-  }
-  return false;
-}*/
 
 function mouseClicked(){
-  if(menusActivated == true){
-    menusActivated = false;
+  if(menusActivated.info == true){
+    menusActivated.info = false;
   }
-  if(menusActivated == false && height - mouseY <= 55 && width - mouseX <= 255){
-    menusActivated = true;
+  if(menusActivated.help == true){
+    menusActivated.help = false;
   }
-  if(infos.length != 0){
-      infos.length = 0;
+  if(menusActivated.error == true){
+    menusActivated.error = false;
   }
-  for(var i = 0; i < pesols.length; i++){
-    if(dist(mouseX, mouseY, pesols[i].x, pesols[i].y) <= radius/2 + 2 && infos.length == 0){
-      let k = new Info(mouseX, mouseY, i);
-      infos.push(k);
+  if(menusActivated.end == true){
+    if(dist(mouseX, mouseY, width - 30, height - 30) <= 50){
+      saveCanvas('mendelResultats', 'png');
+    }else{
+      menusActivated.end = false;
+      menusActivated.start = true;
     }
   }
-  if(dist(mouseX, mouseY, 560, 510) < 30){
+  if(menusActivated.start == true && height - mouseY <= 55 && width - mouseX <= 255){
+    generator();
+    menusActivated.start = false;
+  }
+  if(menusActivated.any == false){
+    if(menusActivated.info == false && height - mouseY <= 55 && width - mouseX <= 255){
+      if(help <= 4){
+        menusActivated.info = true;
+      }else{
+        menusActivated.error = true;
+      }
+    }
+    if(infos.length != 0){
+        infos.length = 0;
+    }
+    if(help <= 2){
+      for(var i = 0; i < pesols.length; i++){
+        if(dist(mouseX, mouseY, pesols[i].x, pesols[i].y) <= radius/2 + 2 && infos.length == 0){
+          let k = new Info(mouseX, mouseY, i);
+          infos.push(k);
+        }
+      }
+    }
+  
+    if(dist(mouseX, mouseY, 560, 510) < 30){
     check();
+    }
+    if(dist(mouseX, mouseY, 560, 430) < 30){
+    menusActivated.help = true;
+    }
+    if(dist(mouseX, mouseY, 560, 350) < 30){
+    menusActivated.start = true;
+    }
   }
 }
 
@@ -401,33 +453,278 @@ function doubleClicked(){
 }
 
 function check(){
-  noLoop();
+  id = makeid(10);
+  puntuation = map(difficulty, 1, 5, 0, 10) + map(help, 1, 5, 0, 10);
   let correct = true;
   for(var i = 0; i < pesols.length; i++){
     if(pesols[i].found != pesols[i].mutated){
       correct = false;
-      lost();
+      puntuation = map(puntuation, 0, 35, -3, 11);
+      menusActivated.end = true;
+      break;
     }
   }
-  if(correct == true){won();}
+  if(correct == true){
+    puntuation += 15;
+    puntuation = map(puntuation, 0, 35, -3, 11);
+    menusActivated.end = true;
+  }
 }
 
-function lost(){
+function endMenu(){
   push();
-  textSize(400);
+  textSize(60);
+  textAlign(CENTER, CENTER);
+  fill(0);
+  text("RESULTATS", width/2, height/7);
+  textSize(12);
+  textAlign(RIGHT, CENTER);
+  text("Expedient: " + id, width - 20, 20);
+  textSize(30);
+  text("DIFICULTAT:", width/2 - 5, 2*height/7);
+  text("AJUDES:", width/2 - 5, 2.5*height/7);
+  textAlign(LEFT, CENTER);
+  textSize(12);
+  text(day() +"/" + month()+"/" + year(), 20, 20);
+  textSize(14);
+  text("Joan Font Perelló 2020", 10, height - 10);
+  textSize(20);
+  var difficultyText;
+  if(difficulty == 1){difficultyText = "Molt Baixa"}
+  if(difficulty == 2){difficultyText = "Baixa"}
+  if(difficulty == 3){difficultyText = "Mitjana"}
+  if(difficulty == 4){difficultyText = "Alta"}
+  if(difficulty == 5){difficultyText = "Molt Alta"}
+  var helpText;
+  if(help == 1){helpText = "Totes"}
+  if(help == 2){helpText = "Significatives"}
+  if(help == 3){helpText = "Significatives"}
+  if(help == 4){helpText = "Insignificants"}
+  if(help == 5){helpText = "Cap"}
+  if(difficulty == 5 && help == 5 && puntuation == 5){puntuation = 4.9}
+  text(difficultyText, width/2 + 5, 2*height/7);
+  text(helpText, width/2 + 5, 2.5*height/7);
+  fill(0,0);
+  beginShape(QUAD_STRIP);
+  vertex(width/6, height/2 + 20);
+  vertex(width/6, height/2 - 10);
+  vertex(width/3, height/2 + 20);
+  vertex(width/3, height/2 - 10);
+  vertex(width/2, height/2 + 20);
+  vertex(width/2, height/2 - 10);
+  vertex(2*width/3, height/2 + 20);
+  vertex(2*width/3, height/2 - 10);
+  vertex(5*width/6, height/2 + 20);
+  vertex(5*width/6, height/2 - 10);
+  endShape();
+  fill(0);
+  noStroke();
+  textAlign(CENTER, CENTER);
+  text(nfc(puntuation, 2), 3*width/12, height/2 + 5);
+  text(nfc(map(puntuation, 0, 10, 0, 4), 2), 5*width/12, height/2 + 5);
+  var USA;
+  if(puntuation >= 10){USA = "A"}
+  if(puntuation < 10){USA = "A-"}
+  if(puntuation < 9.5){USA = "B+"}
+  if(puntuation < 9){USA = "B"}
+  if(puntuation < 8.5){USA = "B-"}
+  if(puntuation < 8){USA = "C+"}
+  if(puntuation < 7.5){USA = "C"}
+  if(puntuation < 7){USA = "C-"}
+  if(puntuation < 6.5){USA = "D+"}
+  if(puntuation < 6){USA = "D"}
+  if(puntuation < 5.5){USA = "D-"}
+  if(puntuation < 5){USA = "F"}
+  if(puntuation < 0){USA = "Z"}
+  text(USA, 7*width/12, height/2 + 5);
+  text(nfc(map(puntuation, 0, 10, 0, 13), 2), 9*width/12, height/2 + 5);
+  text("ESP", 3*width/12, height/2 - 30);
+  text("GER", 5*width/12, height/2 - 30);
+  text("USA", 7*width/12, height/2 - 30);
+  text("SWE", 9*width/12, height/2 - 30);
+  text("Aquest joc certifica que el posseïdor del diploma", width/2, 2*height/3);
+  var greeting;
+  if(puntuation > 10){greeting = "ha hackejat o fet trampes d'alguna manera \nper superar aquesta prova."}
+  if(puntuation <= 10){greeting = "hagués pogut desbancar a Mendel si hagués \nnascut un poc abans."}
+  if(puntuation < 8){greeting = "té un gran domini en l'àmbit de la genètica."}
+  if(puntuation < 6){greeting = "entén les lleis de Mendel, demostrant \nmolt de potencial."}
+  if(puntuation <= 5){greeting = "ha de repassar un poc."}
+  if(puntuation == 0){greeting = "s'hauria de mirar el tema abans de tornar \na jugar."}
+  if(puntuation < 0){greeting = "no te remei."}
+  textAlign(CENTER, TOP);
+  text(greeting, width/2, 2*height/3 + 20);
+  fill(23, 165, 137);
+  circle(width - 30, height - 30, 100);
+  fill(232, 248, 245);
+  textAlign(CENTER, CENTER);
+  textSize(14);
+  text("DNA\nCertified", width - 35, height - 35);
+  pop();
+}
+
+function helpMenu(){
+  push();
+  textAlign(CENTER, CENTER);
+  fill(0);
+  textSize(40);
+  text("Has demanat ajuda?", width/2, 1*height/7);
+  textSize(16);
+  textStyle(ITALIC);
+  text("En aquest joc hauràs de trobar els individus mutats aplicant\nels teus coneixements respecte la genètica mendeliana.", width/2, 2.5*height/7);
+  textStyle(NORMAL);
+  text("Si tens l'opció sel·leccionada, fes clic sobre els pesols per \nconeixer la informació genètica exacta de cada individu.\n\nLa llegenda es desplega pitjant sobre les targetes de la part\ninferior dreta.\n\nEl detector generacional de mutacions t'ajuda marcant només\n les generacions que tenen algun individu mutat.", width/2, 3*height/5);
+  text("Per a marcar un individu com a mutat, fes doble clic sobre ell.", width/2, 5.7*height/7);
+  textStyle(ITALIC);
+  text("Clica per continuar", width/2, 6.3*height/7);
+  pop();
+}
+
+function errorMenu(){
+  push();
+  textSize(40);
   textAlign(CENTER, CENTER);
   fill(color(255, 0, 0));
-  text("X", width/2, height/2);
+  text("NO ES POT UTILITZAR ☹", width/2, height/2);
+  fill(0);
+  textSize(20);
+  text("Reinicia la partida i sel·lecciona més ", width/2, 4*height/5 + 40);
+  text("ajudes per desblocar aquesta opció!", width/2, 4*height/5 + 60);
+  textStyle(ITALIC);
+  text("Clica per continuar", width/2, 4*height/5);
   pop();
 }
 
-function won(){
+function startMenu(){
   push();
-  textSize(400);
+  noStroke();
+  fill(0);
+  textSize(40);
   textAlign(CENTER, CENTER);
-  fill(color(0, 255, 0));
-  text("✓", width/2, height/2);
+  rectMode(CENTER);
+  text("Mendel!", width/2, 40);
+  textSize(20);
+  text("Dificultat:", 70, 2*height/5);
+  var difficultyText;
+  if(difficulty == 1){difficultyText = "Terraplanista"; fill(76, 175, 80)}
+  if(difficulty == 2){difficultyText = "Encara m'he de mirar el tema"; fill(251, 192, 45)}
+  if(difficulty == 3){difficultyText = "Vull repassar abans de l'examen"; fill(230, 126, 34)}
+  if(difficulty == 4){difficultyText = "Genetista"; fill(229, 57, 53)}
+  if(difficulty == 5){difficultyText = "Dement"; fill(33, 33, 33)}
+  text(difficultyText, width/2, 2*height/5 - 40);
+  rect(width/2, 2*height/5, width/2, 10, 5);
+  circle(width/2 + map(difficulty, 1, 5, -width/4, width/4), 2*height/5, 30);
+  fill(0);
+  text("Ajudes:", 70, 3*height/5);
+  var helpText;
+  if(help == 1){helpText = "Totes"; fill(76, 175, 80)}
+  if(help == 2){helpText = "Informació genètica exacta"; fill(251, 192, 45)}
+  if(help == 3){helpText = "Detector generacional de mutacions"; fill(230, 126, 34)}
+  if(help == 4){helpText = "Només llegenda"; fill(229, 57, 53)}
+  if(help == 5){helpText = "Cap"; fill(33, 33, 33)}
+  textAlign(CENTER, CENTER);
+  text(helpText, width/2, 3*height/5 - 40);
+  rect(width/2, 3*height/5, width/2, 10, 5);
+  circle(width/2 + map(help, 1, 5, -width/4, width/4), 3*height/5, 30);
+  
+  
+  rectMode(CORNER);
+  for(var i = 0; i < 6; i++){
+    noStroke();
+    fill(color(118, 215, 196));
+    rect(width - 255 + 30*i, height - 55, 110, 210, 10);
+    fill(color(209, 242, 235));
+    rect(width - 250 + 30*i, height - 50, 100, 200, 10);
+  }
+  fill(0);
+  textSize(18);
+  text("Començar!", width - 200 + 30*5, height - 20);
   pop();
 }
 
+function mouseDragged(){
+  if(menusActivated.start == true){
+    if(abs(mouseY - 2*height/5) < 15 && mouseX >= width/4 && mouseX <= 3*width/4){
+      difficulty = round(map(mouseX, width/4, 3*width/4, 1, 5));
+    }
+    if(abs(mouseY - 3*height/5) < 15 && mouseX >= width/4 && mouseX <= 3*width/4){
+      help = round(map(mouseX, width/4, 3*width/4, 1, 5));
+    }
+  }
+}
 
+function generator(){
+  if(difficulty == 1){
+    initialPopulation = 2;
+    genesNumber = 1;
+    mutationsNumber.min = 1;
+    mutationsNumber.max = 1;
+    generationPopulation.min = 2;
+    generationPopulation.max = 4;
+    numberGenerations.min = 3;
+    numberGenerations.max = 3;
+  }
+  if(difficulty == 2){
+    initialPopulation = 3;
+    genesNumber = 2;
+    mutationsNumber.min = 1;
+    mutationsNumber.max = 2;
+    generationPopulation.min = 2;
+    generationPopulation.max = 4;
+    numberGenerations.min = 3;
+    numberGenerations.max = 3;
+  }
+  if(difficulty == 3){
+    initialPopulation = 3;
+    genesNumber = 3;
+    mutationsNumber.min = 2;
+    mutationsNumber.max = 3;
+    generationPopulation.min = 3;
+    generationPopulation.max = 5;
+    numberGenerations.min = 3;
+    numberGenerations.max = 4;
+  }
+  if(difficulty == 4){
+    initialPopulation = 4;
+    genesNumber = 4;
+    mutationsNumber.min = 2;
+    mutationsNumber.max = 4;
+    generationPopulation.min = 3;
+    generationPopulation.max = 6;
+    numberGenerations.min = 4;
+    numberGenerations.max = 5;
+  }
+  if(difficulty == 5){
+    initialPopulation = 5;
+    genesNumber = 4;
+    mutationsNumber.min = 3;
+    mutationsNumber.max = 5;
+    generationPopulation.min = 4;
+    generationPopulation.max = 6;
+    numberGenerations.min = 5;
+    numberGenerations.max = 6;
+  }
+
+  
+  //població inicial
+  pesols.length = 0;
+  for(var i = 0; i < initialPopulation; i++){
+    let g = new Genoma();
+    let p = new Pesol(g, (i+1)*(width -50)/(initialPopulation+1), radius, null, 0);
+    pesols.push(p);
+  }
+  //fills generats
+  generatePopulation();
+  
+  //mutacions
+  generateMutations();
+}
+
+function makeid(length) {
+   var result           = '';
+   var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+   var charactersLength = characters.length;
+   for ( var i = 0; i < length; i++ ) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+   }
+   return result;
+}
