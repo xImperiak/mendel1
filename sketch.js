@@ -1,5 +1,6 @@
 let id;
 
+let detections = [];
 let pesols = [];
 let buttons = [];
 let click1 = -1;
@@ -59,6 +60,9 @@ function draw() {
     }
     for(var i = 0; i < infos.length; i++){
       infos[i].show();
+    }
+    for(var i = 0; i < detections.length; i++){
+      detections[i].show();
     }
   }else{
     if(menusActivated.info == true){
@@ -267,9 +271,13 @@ function generatePopulation(){
 
 function generateMutations(){
   mutationsNumber.number = round(random(mutationsNumber.min, mutationsNumber.max));
+  if(mutationsNumber.min == mutationsNumber.max){mutationsNumber.number = mutationsNumber.max}
   let nothing = 0;
-  for(var i = 0; i < mutationsNumber.number; i++){
+  let i = 0;
+  console.log(mutationsNumber);
+  while(i < mutationsNumber.number){
     let rand = round(random(initialPopulation -1, pesols.length -1));
+    console.log(rand);
     let found = false;
     for(var k = 0; k < genesNumber; k++){
       if(pesols[rand].parents != null){
@@ -282,11 +290,12 @@ function generateMutations(){
           found = true;
           nothing = 0;
           pesols[rand].mutated = true;
+          i++
           break;
         }
       }
     }
-    if(found == false){i--; nothing++}
+    if(found == false){nothing++}
     if(nothing == 60){generator();}
   }
 }
@@ -707,6 +716,7 @@ function generator(){
   
   //població inicial
   pesols.length = 0;
+  detections.length = 0;
   for(var i = 0; i < initialPopulation; i++){
     let g = new Genoma();
     let p = new Pesol(g, (i+1)*(width -50)/(initialPopulation+1), radius, null, 0);
@@ -717,6 +727,44 @@ function generator(){
   
   //mutacions
   generateMutations();
+  mutationDetector();
+}
+
+function mutationDetector(){
+  if(help == 3 || help == 1){
+    for(var i = 0; i < pesols.length; i++){
+      if(pesols[i].mutated == true){
+        let found = false;
+        for(var k = 0; k < detections.length; k++){
+          if(detections[k].y == pesols[i].y){
+            found = true;
+          }
+        }
+        if(found == false){
+          let d = new Detection(pesols[i].y);
+          detections.push(d);
+        }
+      }
+    }
+  }
+}
+
+class Detection{
+  constructor(y){
+    this.y = y;
+  }
+  
+  show(){
+    push();
+    fill(231, 76, 60);
+    noStroke();
+    circle(20, this.y, 30);
+    textAlign(CENTER, CENTER);
+    fill(0);
+    textSize(20);
+    text("!", 20, this.y);
+    pop();
+  }
 }
 
 function makeid(length) {
