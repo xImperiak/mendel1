@@ -126,14 +126,14 @@ class Pesol{
       circle(this.x, this.y, radius + 10);
       pop();
     }
-    if(this.mutated == true){
+    /*if(this.mutated == true){
       push();
       strokeWeight(2);
       stroke(0, 150, 0);
       noFill();
       circle(this.x, this.y, radius + 6);
       pop();
-    }
+    }*/
     fill(this.c);
     if(this.shape == 1){circle(this.x, this.y, radius);}
     if(this.shape == 2){
