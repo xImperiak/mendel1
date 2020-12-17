@@ -42,6 +42,7 @@ let menusActivated = {
 
 function setup() {
   let minimum = min(windowWidth, windowHeight);
+  minimum = 600;
   createCanvas(minimum, minimum);
   textFont('monospace');
   scale(minimum/600);
